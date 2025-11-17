@@ -95,3 +95,17 @@ export async function setNoteCategories(noteId: number, categoryIds: number[]) {
   if (!res.ok) throw new Error("Failed to set note categories");
   return res.json();
 }
+
+export async function createCategory(name: string) {
+  const res = await fetch(`${API_URL}/categories`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to create category");
+  }
+
+  return res.json();
+}

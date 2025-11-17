@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Note,
   Category,
@@ -11,7 +10,10 @@ import {
   archiveNote,
   updateNote,
   setNoteCategories,
+  createCategory,
 } from "./lib/api";
+
+import { useEffect, useState, useCallback } from "react";
 
 export default function HomePage() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -37,8 +39,10 @@ export default function HomePage() {
   const [categoryEditSelection, setCategoryEditSelection] = useState<number[]>(
     []
   );
+  // create categories
+  const [newCategoryName, setNewCategoryName] = useState("");
 
-  async function loadCategories() {
+  const loadCategories = useCallback(async () => {
     try {
       const data = await fetchCategories();
       setCategories(data);
@@ -46,9 +50,9 @@ export default function HomePage() {
       console.error(err);
       setError("Failed to load categories");
     }
-  }
+  }, []);
 
-  async function loadNotes() {
+  const loadNotes = useCallback(async () => {
     try {
       setLoading(true);
       const categoryId =
@@ -62,17 +66,17 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [selectedCategoryFilter]);
 
   useEffect(() => {
-    // load categories once
+    // load categories once on mount
     loadCategories();
-  }, []);
+  }, [loadCategories]);
 
   useEffect(() => {
     // reload notes when filter changes
     loadNotes();
-  }, [selectedCategoryFilter]);
+  }, [loadNotes]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -86,6 +90,20 @@ export default function HomePage() {
     } catch (err) {
       console.error(err);
       setError("Failed to create note");
+    }
+  }
+
+  async function handleCreateCategory(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newCategoryName.trim()) return;
+
+    try {
+      await createCategory(newCategoryName.trim());
+      setNewCategoryName("");
+      await loadCategories();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to create category");
     }
   }
 
@@ -176,34 +194,56 @@ export default function HomePage() {
               Create, edit, delete, archive and categorize your notes.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <select
-              className="rounded border border-slate-300 px-2 py-1 text-sm"
-              value={
-                selectedCategoryFilter === "all"
-                  ? "all"
-                  : String(selectedCategoryFilter)
-              }
-              onChange={(e) => {
-                const value = e.target.value;
-                setSelectedCategoryFilter(
-                  value === "all" ? "all" : Number(value)
-                );
-              }}
+
+          {/* Right side: filter + add category */}
+          <div className="flex flex-col gap-2 md:items-end">
+            <div className="flex items-center gap-3">
+              <select
+                className="rounded border border-slate-300 px-2 py-1 text-sm"
+                value={
+                  selectedCategoryFilter === "all"
+                    ? "all"
+                    : String(selectedCategoryFilter)
+                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedCategoryFilter(
+                    value === "all" ? "all" : Number(value)
+                  );
+                }}
+              >
+                <option value="all">All categories</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              <a
+                href="/archived"
+                className="text-sm font-medium text-blue-600 hover:underline"
+              >
+                View archived
+              </a>
+            </div>
+
+            <form
+              onSubmit={handleCreateCategory}
+              className="flex items-center gap-2"
             >
-              <option value="all">All categories</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-            <a
-              href="/archived"
-              className="text-sm font-medium text-blue-600 hover:underline"
-            >
-              View archived
-            </a>
+              <input
+                className="w-40 rounded border border-slate-300 px-2 py-1 text-xs"
+                placeholder="New category name"
+                value={newCategoryName}
+                onChange={(e) => setNewCategoryName(e.target.value)}
+              />
+              <button
+                type="submit"
+                className="rounded bg-slate-800 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-900"
+              >
+                Add
+              </button>
+            </form>
           </div>
         </header>
 
