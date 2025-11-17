@@ -1,5 +1,10 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+export type Category = {
+  id: number;
+  name: string;
+};
+
 export type Note = {
   id: number;
   title: string;
@@ -7,10 +12,20 @@ export type Note = {
   archived: boolean;
   createdAt: string;
   updatedAt: string;
+  categories: Category[];
 };
 
-export async function fetchNotes(archived: boolean): Promise<Note[]> {
-  const res = await fetch(`${API_URL}/notes?archived=${archived}`, {
+export async function fetchNotes(
+  archived: boolean,
+  categoryId?: number
+): Promise<Note[]> {
+  const params = new URLSearchParams();
+  params.set("archived", archived ? "true" : "false");
+  if (categoryId !== undefined) {
+    params.set("categoryId", String(categoryId));
+  }
+
+  const res = await fetch(`${API_URL}/notes?${params.toString()}`, {
     cache: "no-store",
   });
   if (!res.ok) throw new Error("Failed to fetch notes");
@@ -41,7 +56,9 @@ export async function updateNote(
 }
 
 export async function deleteNote(id: number) {
-  const res = await fetch(`${API_URL}/notes/${id}`, { method: "DELETE" });
+  const res = await fetch(`${API_URL}/notes/${id}`, {
+    method: "DELETE",
+  });
   if (!res.ok) throw new Error("Failed to delete note");
 }
 
@@ -58,5 +75,23 @@ export async function unarchiveNote(id: number) {
     method: "PATCH",
   });
   if (!res.ok) throw new Error("Failed to unarchive note");
+  return res.json();
+}
+
+export async function fetchCategories(): Promise<Category[]> {
+  const res = await fetch(`${API_URL}/categories`, {
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Failed to fetch categories");
+  return res.json();
+}
+
+export async function setNoteCategories(noteId: number, categoryIds: number[]) {
+  const res = await fetch(`${API_URL}/notes/${noteId}/categories`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ categoryIds }),
+  });
+  if (!res.ok) throw new Error("Failed to set note categories");
   return res.json();
 }

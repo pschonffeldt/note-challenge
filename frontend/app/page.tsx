@@ -3,29 +3,57 @@
 import { useEffect, useState } from "react";
 import {
   Note,
+  Category,
+  fetchCategories,
   fetchNotes,
   createNote,
   deleteNote,
   archiveNote,
   updateNote,
+  setNoteCategories,
 } from "./lib/api";
 
 export default function HomePage() {
   const [notes, setNotes] = useState<Note[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<
+    number | "all"
+  >("all");
+
   const [loading, setLoading] = useState(true);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // editing state
+  // editing text
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingContent, setEditingContent] = useState("");
 
+  // editing categories
+  const [categoryEditNoteId, setCategoryEditNoteId] = useState<number | null>(
+    null
+  );
+  const [categoryEditSelection, setCategoryEditSelection] = useState<number[]>(
+    []
+  );
+
+  async function loadCategories() {
+    try {
+      const data = await fetchCategories();
+      setCategories(data);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load categories");
+    }
+  }
+
   async function loadNotes() {
     try {
       setLoading(true);
-      const data = await fetchNotes(false); // active notes
+      const categoryId =
+        selectedCategoryFilter === "all" ? undefined : selectedCategoryFilter;
+      const data = await fetchNotes(false, categoryId); // active notes only
       setNotes(data);
       setError(null);
     } catch (err) {
@@ -37,8 +65,14 @@ export default function HomePage() {
   }
 
   useEffect(() => {
-    loadNotes();
+    // load categories once
+    loadCategories();
   }, []);
+
+  useEffect(() => {
+    // reload notes when filter changes
+    loadNotes();
+  }, [selectedCategoryFilter]);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -103,22 +137,74 @@ export default function HomePage() {
     }
   }
 
+  function startCategoryEdit(note: Note) {
+    setCategoryEditNoteId(note.id);
+    setCategoryEditSelection(note.categories.map((c) => c.id));
+  }
+
+  function cancelCategoryEdit() {
+    setCategoryEditNoteId(null);
+    setCategoryEditSelection([]);
+  }
+
+  function toggleCategoryInSelection(categoryId: number) {
+    setCategoryEditSelection((current) =>
+      current.includes(categoryId)
+        ? current.filter((id) => id !== categoryId)
+        : [...current, categoryId]
+    );
+  }
+
+  async function saveCategoryEdit(noteId: number) {
+    try {
+      await setNoteCategories(noteId, categoryEditSelection);
+      cancelCategoryEdit();
+      await loadNotes();
+    } catch (err) {
+      console.error(err);
+      setError("Failed to update categories");
+    }
+  }
+
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900">
       <div className="mx-auto max-w-3xl px-4 py-8">
-        <header className="mb-6 flex items-center justify-between">
+        <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold">Notes (Active)</h1>
             <p className="text-sm text-slate-500">
-              Create, edit, delete and archive notes.
+              Create, edit, delete, archive and categorize your notes.
             </p>
           </div>
-          <a
-            href="/archived"
-            className="text-sm font-medium text-blue-600 hover:underline"
-          >
-            View archived
-          </a>
+          <div className="flex items-center gap-3">
+            <select
+              className="rounded border border-slate-300 px-2 py-1 text-sm"
+              value={
+                selectedCategoryFilter === "all"
+                  ? "all"
+                  : String(selectedCategoryFilter)
+              }
+              onChange={(e) => {
+                const value = e.target.value;
+                setSelectedCategoryFilter(
+                  value === "all" ? "all" : Number(value)
+                );
+              }}
+            >
+              <option value="all">All categories</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+            <a
+              href="/archived"
+              className="text-sm font-medium text-blue-600 hover:underline"
+            >
+              View archived
+            </a>
+          </div>
         </header>
 
         {/* New note form */}
@@ -157,17 +243,18 @@ export default function HomePage() {
             <p className="text-sm text-slate-500">Loading…</p>
           ) : notes.length === 0 ? (
             <p className="text-sm text-slate-500">
-              No notes yet. Create one above.
+              No notes yet for this filter. Create one above.
             </p>
           ) : (
             <ul className="space-y-3">
               {notes.map((note) => {
                 const isEditing = editingId === note.id;
+                const isCategoryEditing = categoryEditNoteId === note.id;
 
                 return (
                   <li
                     key={note.id}
-                    className="flex items-start justify-between gap-3 rounded border border-slate-200 p-3"
+                    className="flex flex-col gap-3 rounded border border-slate-200 p-3 md:flex-row md:items-start md:justify-between"
                   >
                     <div className="flex-1">
                       {isEditing ? (
@@ -194,9 +281,71 @@ export default function HomePage() {
                           </p>
                         </>
                       )}
+
+                      {/* Categories display */}
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {note.categories.map((cat) => (
+                          <span
+                            key={cat.id}
+                            className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700"
+                          >
+                            {cat.name}
+                          </span>
+                        ))}
+                        {note.categories.length === 0 && (
+                          <span className="text-xs text-slate-400">
+                            No categories
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Category editing UI */}
+                      {isCategoryEditing && categories.length > 0 && (
+                        <div className="mt-3 rounded border border-slate-200 p-2">
+                          <p className="mb-2 text-xs font-semibold text-slate-600">
+                            Edit categories
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {categories.map((cat) => (
+                              <label
+                                key={cat.id}
+                                className="flex items-center gap-1 text-xs text-slate-700"
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="h-3 w-3"
+                                  checked={categoryEditSelection.includes(
+                                    cat.id
+                                  )}
+                                  onChange={() =>
+                                    toggleCategoryInSelection(cat.id)
+                                  }
+                                />
+                                {cat.name}
+                              </label>
+                            ))}
+                          </div>
+                          <div className="mt-2 flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => saveCategoryEdit(note.id)}
+                              className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              onClick={cancelCategoryEdit}
+                              className="rounded bg-slate-400 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-500"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    <div className="flex flex-col gap-2">
+                    <div className="flex gap-2 md:flex-col">
                       {isEditing ? (
                         <>
                           <button
@@ -222,6 +371,13 @@ export default function HomePage() {
                             className="rounded bg-slate-600 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-700"
                           >
                             Edit
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => startCategoryEdit(note)}
+                            className="rounded bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-700"
+                          >
+                            Categories
                           </button>
                           <button
                             type="button"

@@ -1,22 +1,69 @@
+// src/notes/notes.repository.ts
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Note, Prisma } from '@prisma/client';
+import { Category, Prisma } from '@prisma/client';
+
+// Prisma type: Note with its categories + each category entity
+type NoteWithCategories = Prisma.NoteGetPayload<{
+  include: { categories: { include: { category: true } } };
+}>;
+
+// Shape we return from the repository
+export type NoteRecord = {
+  id: number;
+  title: string;
+  content: string;
+  archived: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  categories: Category[];
+};
 
 @Injectable()
 export class NotesRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  create(data: Prisma.NoteCreateInput): Promise<Note> {
-    return this.prisma.note.create({ data });
+  private mapNote(note: NoteWithCategories): NoteRecord {
+    return {
+      id: note.id,
+      title: note.title,
+      content: note.content,
+      archived: note.archived,
+      createdAt: note.createdAt,
+      updatedAt: note.updatedAt,
+      // note.categories is NoteCategory[] with { category: Category }
+      categories: note.categories.map((nc) => nc.category),
+    };
   }
 
-  findAll(params: {
+  async create(data: {
+    title: string;
+    content: string;
+    archived?: boolean;
+  }): Promise<NoteRecord> {
+    const note = await this.prisma.note.create({
+      data: {
+        title: data.title,
+        content: data.content,
+        archived: data.archived ?? false,
+      },
+      include: {
+        categories: {
+          include: { category: true },
+        },
+      },
+    });
+
+    return this.mapNote(note);
+  }
+
+  async findAll(params: {
     archived?: boolean;
     categoryId?: number;
-  }): Promise<Note[]> {
+  }): Promise<NoteRecord[]> {
     const { archived, categoryId } = params;
 
-    return this.prisma.note.findMany({
+    const notes = await this.prisma.note.findMany({
       where: {
         ...(archived !== undefined ? { archived } : {}),
         ...(categoryId !== undefined
@@ -28,18 +75,106 @@ export class NotesRepository {
           : {}),
       },
       orderBy: { createdAt: 'desc' },
+      include: {
+        categories: {
+          include: { category: true },
+        },
+      },
     });
+
+    return notes.map((n) => this.mapNote(n));
   }
 
-  findOne(id: number): Promise<Note | null> {
-    return this.prisma.note.findUnique({ where: { id } });
+  async findOne(id: number): Promise<NoteRecord | null> {
+    const note = await this.prisma.note.findUnique({
+      where: { id },
+      include: {
+        categories: {
+          include: { category: true },
+        },
+      },
+    });
+
+    return note ? this.mapNote(note) : null;
   }
 
-  update(id: number, data: Prisma.NoteUpdateInput): Promise<Note> {
-    return this.prisma.note.update({ where: { id }, data });
+  async update(
+    id: number,
+    data: { title?: string; content?: string; archived?: boolean },
+  ): Promise<NoteRecord> {
+    const note = await this.prisma.note.update({
+      where: { id },
+      data,
+      include: {
+        categories: {
+          include: { category: true },
+        },
+      },
+    });
+
+    return this.mapNote(note);
   }
 
-  delete(id: number): Promise<Note> {
-    return this.prisma.note.delete({ where: { id } });
+  async delete(id: number): Promise<NoteRecord> {
+    // First remove any category relations to avoid FK constraint errors
+    await this.prisma.noteCategory.deleteMany({
+      where: { noteId: id },
+    });
+
+    const note = await this.prisma.note.delete({
+      where: { id },
+      include: {
+        categories: {
+          include: { category: true },
+        },
+      },
+    });
+
+    return this.mapNote(note);
+  }
+
+  async setArchived(id: number, archived: boolean): Promise<NoteRecord> {
+    const note = await this.prisma.note.update({
+      where: { id },
+      data: { archived },
+      include: {
+        categories: {
+          include: { category: true },
+        },
+      },
+    });
+
+    return this.mapNote(note);
+  }
+
+  async setCategories(
+    noteId: number,
+    categoryIds: number[],
+  ): Promise<NoteRecord | null> {
+    // Remove existing relations
+    await this.prisma.noteCategory.deleteMany({
+      where: { noteId },
+    });
+
+    if (categoryIds.length > 0) {
+      await this.prisma.noteCategory.createMany({
+        data: categoryIds.map((categoryId) => ({
+          noteId,
+          categoryId,
+        })),
+        skipDuplicates: true,
+      });
+    }
+
+    const updated = await this.prisma.note.findUnique({
+      where: { id: noteId },
+      include: {
+        categories: {
+          include: { category: true },
+        },
+      },
+    });
+
+    return updated ? this.mapNote(updated as NoteWithCategories) : null;
   }
 }

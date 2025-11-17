@@ -60,4 +60,12 @@ export class NotesController {
   unarchive(@Param('id', ParseIntPipe) id: number) {
     return this.notesService.setArchived(id, false);
   }
+
+  @Patch(':id/categories')
+  setCategories(
+    @Param('id', ParseIntPipe) id: number,
+    @Body('categoryIds') categoryIds: number[],
+  ) {
+    return this.notesService.setCategories(id, categoryIds ?? []);
+  }
 }
