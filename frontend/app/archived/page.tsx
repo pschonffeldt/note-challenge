@@ -1,30 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  archiveNote,
-  createNote,
-  deleteNote,
-  fetchNotes,
-  Note,
-} from "./lib/api";
+import { deleteNote, fetchNotes, Note, unarchiveNote } from "../lib/api";
+import Link from "next/link";
 
-export default function HomePage() {
+export default function ArchivedNotesPage() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   async function loadNotes() {
     try {
       setLoading(true);
-      const data = await fetchNotes(false); // active only
+      const data = await fetchNotes(true); // archived
       setNotes(data);
       setError(null);
     } catch (err) {
       console.error(err);
-      setError("Failed to load notes");
+      setError("Failed to load archived notes");
     } finally {
       setLoading(false);
     }
@@ -33,21 +26,6 @@ export default function HomePage() {
   useEffect(() => {
     loadNotes();
   }, []);
-
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    if (!title.trim() || !content.trim()) return;
-
-    try {
-      await createNote({ title, content });
-      setTitle("");
-      setContent("");
-      await loadNotes();
-    } catch (err) {
-      console.error(err);
-      setError("Failed to create note");
-    }
-  }
 
   async function handleDelete(id: number) {
     try {
@@ -59,13 +37,13 @@ export default function HomePage() {
     }
   }
 
-  async function handleArchive(id: number) {
+  async function handleUnarchive(id: number) {
     try {
-      await archiveNote(id);
+      await unarchiveNote(id);
       await loadNotes();
     } catch (err) {
       console.error(err);
-      setError("Failed to archive note");
+      setError("Failed to unarchive note");
     }
   }
 
@@ -74,53 +52,25 @@ export default function HomePage() {
       <div className="mx-auto max-w-3xl px-4 py-8">
         <header className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Notes (Active)</h1>
+            <h1 className="text-2xl font-bold">Archived notes</h1>
             <p className="text-sm text-slate-500">
-              Create, view, delete and archive notes.
+              Notes you&apos;ve archived.
             </p>
           </div>
-          <a
-            href="/archived"
+          <Link
+            href="/"
             className="text-sm font-medium text-blue-600 hover:underline"
           >
-            View archived
-          </a>
+            Back to active
+          </Link>
         </header>
 
-        <section className="mb-8 rounded-lg bg-white p-4 shadow-sm">
-          <h2 className="mb-3 text-lg font-semibold">New note</h2>
-          <form onSubmit={handleCreate} className="space-y-3">
-            <input
-              className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-              placeholder="Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-            <textarea
-              className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-              placeholder="Content"
-              rows={4}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-            />
-            <button
-              type="submit"
-              className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-            >
-              Save note
-            </button>
-          </form>
-        </section>
-
         <section className="rounded-lg bg-white p-4 shadow-sm">
-          <h2 className="mb-3 text-lg font-semibold">Active notes</h2>
           {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
           {loading ? (
             <p className="text-sm text-slate-500">Loading…</p>
           ) : notes.length === 0 ? (
-            <p className="text-sm text-slate-500">
-              No notes yet. Create one above.
-            </p>
+            <p className="text-sm text-slate-500">No archived notes.</p>
           ) : (
             <ul className="space-y-3">
               {notes.map((note) => (
@@ -137,10 +87,10 @@ export default function HomePage() {
                   <div className="flex flex-col gap-2">
                     <button
                       type="button"
-                      onClick={() => handleArchive(note.id)}
-                      className="rounded bg-amber-500 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-600"
+                      onClick={() => handleUnarchive(note.id)}
+                      className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
                     >
-                      Archive
+                      Unarchive
                     </button>
                     <button
                       type="button"
