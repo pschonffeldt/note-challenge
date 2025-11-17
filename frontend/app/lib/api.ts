@@ -109,3 +109,30 @@ export async function createCategory(name: string) {
 
   return res.json();
 }
+
+export async function updateCategory(
+  id: number,
+  name: string
+): Promise<Category> {
+  const res = await fetch(`${API_URL}/categories/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to update category");
+  }
+
+  return res.json();
+}
+
+export async function deleteCategory(id: number): Promise<void> {
+  const res = await fetch(`${API_URL}/categories/${id}`, {
+    method: "DELETE",
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to delete category");
+  }
+}

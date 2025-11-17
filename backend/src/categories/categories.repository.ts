@@ -1,28 +1,42 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { Category } from '@prisma/client';
 
 @Injectable()
 export class CategoriesRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  findAll(): Promise<Category[]> {
+  async create(name: string) {
+    return this.prisma.category.create({
+      data: { name },
+    });
+  }
+
+  async findAll() {
     return this.prisma.category.findMany({
       orderBy: { name: 'asc' },
     });
   }
 
-  findById(id: number): Promise<Category | null> {
-    return this.prisma.category.findUnique({ where: { id } });
-  }
+  async update(id: number, name: string) {
+    console.log('Updating category in repo', { id, name });
 
-  findByName(name: string): Promise<Category | null> {
-    return this.prisma.category.findUnique({ where: { name } });
-  }
-
-  create(name: string): Promise<Category> {
-    return this.prisma.category.create({
+    return this.prisma.category.update({
+      where: { id },
       data: { name },
+    });
+  }
+
+  async remove(id: number) {
+    console.log('Deleting category in repo', { id });
+
+    // 1) clean up join table so FK constraints don’t explode
+    await this.prisma.noteCategory.deleteMany({
+      where: { categoryId: id },
+    });
+
+    // 2) delete the category itself
+    return this.prisma.category.delete({
+      where: { id },
     });
   }
 }

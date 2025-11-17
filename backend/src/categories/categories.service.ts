@@ -1,26 +1,24 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CategoriesRepository } from './categories.repository';
 import { CreateCategoryDto } from './dto/create-category.dto';
 
 @Injectable()
 export class CategoriesService {
-  constructor(private readonly categoriesRepo: CategoriesRepository) {}
+  constructor(private readonly categoriesRepository: CategoriesRepository) {}
 
-  findAll() {
-    return this.categoriesRepo.findAll();
+  create(dto: CreateCategoryDto) {
+    return this.categoriesRepository.create(dto.name);
   }
 
-  async create(dto: CreateCategoryDto) {
-    const name = dto.name.trim();
-    if (!name) {
-      throw new ConflictException('Category name cannot be empty');
-    }
+  findAll() {
+    return this.categoriesRepository.findAll();
+  }
 
-    const existing = await this.categoriesRepo.findByName(name);
-    if (existing) {
-      throw new ConflictException('Category already exists');
-    }
+  update(id: number, name: string) {
+    return this.categoriesRepository.update(id, name);
+  }
 
-    return this.categoriesRepo.create(name);
+  remove(id: number) {
+    return this.categoriesRepository.remove(id);
   }
 }

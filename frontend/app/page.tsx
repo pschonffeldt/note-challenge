@@ -93,20 +93,6 @@ export default function HomePage() {
     }
   }
 
-  async function handleCreateCategory(e: React.FormEvent) {
-    e.preventDefault();
-    if (!newCategoryName.trim()) return;
-
-    try {
-      await createCategory(newCategoryName.trim());
-      setNewCategoryName("");
-      await loadCategories();
-    } catch (err) {
-      console.error(err);
-      setError("Failed to create category");
-    }
-  }
-
   async function handleDelete(id: number) {
     try {
       await deleteNote(id);
@@ -196,54 +182,40 @@ export default function HomePage() {
           </div>
 
           {/* Right side: filter + add category */}
-          <div className="flex flex-col gap-2 md:items-end">
-            <div className="flex items-center gap-3">
-              <select
-                className="rounded border border-slate-300 px-2 py-1 text-sm"
-                value={
-                  selectedCategoryFilter === "all"
-                    ? "all"
-                    : String(selectedCategoryFilter)
-                }
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSelectedCategoryFilter(
-                    value === "all" ? "all" : Number(value)
-                  );
-                }}
-              >
-                <option value="all">All categories</option>
-                {categories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
-              <a
-                href="/archived"
-                className="text-sm font-medium text-blue-600 hover:underline"
-              >
-                View archived
-              </a>
-            </div>
-
-            <form
-              onSubmit={handleCreateCategory}
-              className="flex items-center gap-2"
+          <div className="flex items-center gap-3">
+            <select
+              className="rounded border border-slate-300 px-2 py-1 text-sm"
+              value={
+                selectedCategoryFilter === "all"
+                  ? "all"
+                  : String(selectedCategoryFilter)
+              }
+              onChange={(e) => {
+                const value = e.target.value;
+                setSelectedCategoryFilter(
+                  value === "all" ? "all" : Number(value)
+                );
+              }}
             >
-              <input
-                className="w-40 rounded border border-slate-300 px-2 py-1 text-xs"
-                placeholder="New category name"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-              />
-              <button
-                type="submit"
-                className="rounded bg-slate-800 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-900"
-              >
-                Add
-              </button>
-            </form>
+              <option value="all">All categories</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+            <a
+              href="/archived"
+              className="text-sm font-medium text-blue-600 hover:underline"
+            >
+              View archived
+            </a>
+            <a
+              href="/categories"
+              className="text-sm font-medium text-blue-600 hover:underline"
+            >
+              Manage categories
+            </a>
           </div>
         </header>
 

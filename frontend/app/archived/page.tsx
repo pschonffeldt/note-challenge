@@ -118,6 +118,13 @@ export default function ArchivedNotesPage() {
               >
                 Back to active
               </Link>
+
+              <Link
+                href="/categories"
+                className="text-sm font-medium text-blue-600 hover:underline"
+              >
+                Manage categories
+              </Link>
             </div>
           </div>
         </header>
