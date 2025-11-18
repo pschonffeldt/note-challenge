@@ -27,12 +27,17 @@ export default function HomePage() {
   const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  // categories for *new* note
+  const [newNoteCategorySelection, setNewNoteCategorySelection] = useState<
+    number[]
+  >([]);
+
   // editing text
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingContent, setEditingContent] = useState("");
 
-  // editing categories
+  // editing categories (existing notes)
   const [categoryEditNoteId, setCategoryEditNoteId] = useState<number | null>(
     null
   );
@@ -76,14 +81,31 @@ export default function HomePage() {
     loadNotes();
   }, [loadNotes]);
 
+  function toggleNewNoteCategory(categoryId: number) {
+    setNewNoteCategorySelection((current) =>
+      current.includes(categoryId)
+        ? current.filter((id) => id !== categoryId)
+        : [...current, categoryId]
+    );
+  }
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!title.trim() || !content.trim()) return;
 
     try {
-      await createNote({ title, content });
+      // 1) create note
+      const created = await createNote({ title, content });
+
+      // 2) assign categories if any selected
+      if (created?.id && newNoteCategorySelection.length > 0) {
+        await setNoteCategories(created.id, newNoteCategorySelection);
+      }
+
+      // 3) reset form and reload notes
       setTitle("");
       setContent("");
+      setNewNoteCategorySelection([]);
       await loadNotes();
     } catch (err) {
       console.error(err);
@@ -213,6 +235,32 @@ export default function HomePage() {
               value={content}
               onChange={(e) => setContent(e.target.value)}
             />
+
+            {/* Category selection for new note */}
+            {categories.length > 0 && (
+              <div className="rounded border border-slate-200 p-2">
+                <p className="mb-2 text-xs font-semibold text-slate-600">
+                  Categories for this note
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((cat) => (
+                    <label
+                      key={cat.id}
+                      className="flex items-center gap-1 text-xs text-slate-700"
+                    >
+                      <input
+                        type="checkbox"
+                        className="h-3 w-3"
+                        checked={newNoteCategorySelection.includes(cat.id)}
+                        onChange={() => toggleNewNoteCategory(cat.id)}
+                      />
+                      {cat.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <button
               type="submit"
               className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"

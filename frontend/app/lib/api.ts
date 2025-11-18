@@ -32,13 +32,23 @@ export async function fetchNotes(
   return res.json();
 }
 
-export async function createNote(data: { title: string; content: string }) {
-  const res = await fetch(`${API_URL}/notes`, {
+export async function createNote(data: {
+  title: string;
+  content: string;
+  categoryId?: number | null;
+}) {
+  const res = await fetch("http://localhost:3001/notes", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to create note");
+
+  if (!res.ok) {
+    throw new Error("Failed to create note");
+  }
+
   return res.json();
 }
 
