@@ -7,7 +7,6 @@ import {
   fetchCategories,
   fetchNotes,
   deleteNote,
-  archiveNote,
   updateNote,
   setNoteCategories,
   unarchiveNote,

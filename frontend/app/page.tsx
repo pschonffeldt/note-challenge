@@ -284,8 +284,8 @@ export default function HomePage() {
 
         {/* Active notes list */}
         <section className="rounded-lg bg-white p-4 shadow-sm ">
-          <div className="flex items-center justify-between gap-3 pb-3">
-            <h2 className="mb-3 text-lg font-semibold">Active notes</h2>
+          <div className="flex items-center justify-between gap-3 pb-1">
+            <h2 className="mb-1 text-lg font-semibold">Active notes</h2>
             <div className="flex flex-row justify-between gap-3">
               <p>Filter by category</p>
               <select
@@ -311,6 +311,14 @@ export default function HomePage() {
               </select>
             </div>
           </div>
+
+          {/* Count text */}
+          {!loading && (
+            <p className="pb-2 text-xs text-slate-500">
+              Showing <span className="font-semibold">{notes.length}</span>{" "}
+              active note{notes.length === 1 ? "" : "s"} for this filter.
+            </p>
+          )}
 
           {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
 
