@@ -10,6 +10,7 @@ import {
   archiveNote,
   updateNote,
   setNoteCategories,
+  unarchiveNote,
 } from "../lib/api";
 import { useEffect, useState, useCallback } from "react";
 
@@ -51,7 +52,6 @@ export default function ArchivedPage() {
       setLoading(true);
       const categoryId =
         selectedCategoryFilter === "all" ? undefined : selectedCategoryFilter;
-      // 👇 true = archived
       const data = await fetchNotes(true, categoryId);
       setNotes(data);
       setError(null);
@@ -111,8 +111,7 @@ export default function ArchivedPage() {
 
   async function handleUnarchive(id: number) {
     try {
-      // assuming archiveNote toggles archived status
-      await archiveNote(id);
+      await unarchiveNote(id);
       await loadNotes();
     } catch (err) {
       console.error(err);
