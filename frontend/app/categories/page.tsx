@@ -1,53 +1,33 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
-  Note,
   Category,
   fetchCategories,
-  fetchNotes,
   createCategory,
   updateCategory,
   deleteCategory,
 } from "../lib/api";
 
+import { useEffect, useState, useCallback } from "react";
+
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [notes, setNotes] = useState<Note[]>([]);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingName, setEditingName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // editing state
-  const [editingCategoryId, setEditingCategoryId] = useState<number | null>(
-    null
-  );
-  const [editingCategoryName, setEditingCategoryName] = useState("");
+  const [success, setSuccess] = useState<string | null>(null);
 
   const loadCategories = useCallback(async () => {
     try {
+      setLoading(true);
       const data = await fetchCategories();
       setCategories(data);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load categories");
-    }
-  }, []);
-
-  const loadNotes = useCallback(async () => {
-    try {
-      setLoading(true);
-      // fetch both active and archived notes
-      const [active, archived] = await Promise.all([
-        fetchNotes(false),
-        fetchNotes(true),
-      ]);
-      setNotes([...active, ...archived]);
       setError(null);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load notes for counts");
+    } catch {
+      setError("Failed to load categories.");
     } finally {
       setLoading(false);
     }
@@ -55,171 +35,210 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     loadCategories();
-    loadNotes();
-  }, [loadCategories, loadNotes]);
+  }, [loadCategories]);
 
   async function handleCreateCategory(e: React.FormEvent) {
     e.preventDefault();
-    if (!newCategoryName.trim()) return;
+    const name = newCategoryName.trim();
+
+    if (!name) {
+      setError("Please enter a category name before adding.");
+      setSuccess(null);
+      return;
+    }
 
     try {
-      await createCategory(newCategoryName.trim());
+      await createCategory(name);
       setNewCategoryName("");
+      setError(null);
+      setSuccess("Category created successfully.");
       await loadCategories();
     } catch (err) {
-      console.error(err);
-      setError("Failed to create category");
+      setSuccess(null);
+      if (err instanceof Error) {
+        setError(err.message); // already friendly from api.ts
+      } else {
+        setError("Failed to create category.");
+      }
     }
   }
 
-  function getNoteCountForCategory(categoryId: number) {
-    return notes.reduce((count, note) => {
-      const hasCategory = note.categories.some((c) => c.id === categoryId);
-      return hasCategory ? count + 1 : count;
-    }, 0);
+  function startEditing(cat: Category) {
+    setEditingId(cat.id);
+    setEditingName(cat.name);
+    setSuccess(null);
+    setError(null);
   }
 
-  function startEditingCategory(cat: Category) {
-    setEditingCategoryId(cat.id);
-    setEditingCategoryName(cat.name);
+  function cancelEditing() {
+    setEditingId(null);
+    setEditingName("");
+    setSuccess(null);
   }
 
-  function cancelEditingCategory() {
-    setEditingCategoryId(null);
-    setEditingCategoryName("");
-  }
+  async function saveEditing(id: number) {
+    const name = editingName.trim();
 
-  async function saveEditingCategory(id: number) {
-    if (!editingCategoryName.trim()) return;
+    if (!name) {
+      setError("Category name cannot be empty.");
+      setSuccess(null);
+      return;
+    }
 
     try {
-      const updated = await updateCategory(id, editingCategoryName.trim());
-
-      setCategories((prev) =>
-        prev.map((cat) => (cat.id === id ? updated : cat))
-      );
-
-      cancelEditingCategory();
+      await updateCategory(id, name);
+      setError(null);
+      setSuccess("Category updated successfully.");
+      cancelEditing();
+      await loadCategories();
     } catch (err) {
-      console.error(err);
-      setError("Failed to update category");
+      setSuccess(null);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Failed to update category.");
+      }
     }
   }
 
   async function handleDeleteCategory(id: number) {
     try {
       await deleteCategory(id);
-      // reload both so counts stay correct
-      await Promise.all([loadCategories(), loadNotes()]);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to delete category");
+      setError(null);
+      setSuccess("Category deleted.");
+      await loadCategories();
+    } catch {
+      setSuccess(null);
+      setError("Failed to delete category.");
     }
   }
+
+  const cannotCreateCategory = !newCategoryName.trim();
+  const cannotSaveEdit = !editingName.trim() || editingId === null;
 
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900">
       <div className="mx-auto max-w-3xl px-4 py-8">
         <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Categories</h1>
-            <p className="text-sm text-slate-500">Manage your categories.</p>
+            <h1 className="text-2xl font-bold">Manage categories</h1>
+            <p className="text-sm text-slate-500">
+              Create, rename and delete categories used by your notes.
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="flex h-10 items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-            >
-              Back to active notes
-            </Link>
-            <Link
-              href="/archived"
-              className="flex h-10 items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-            >
-              View archived notes
-            </Link>
-          </div>
+          <Link
+            href="/"
+            className="flex h-10 items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+          >
+            Back to notes
+          </Link>
         </header>
 
-        {/* Create category form */}
-        <section className="mb-6 rounded-lg bg-white p-4 shadow-sm">
+        {/* Global error / success alerts */}
+        {error && (
+          <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            {error}
+          </div>
+        )}
+        {success && !error && (
+          <div className="mb-4 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+            {success}
+          </div>
+        )}
+
+        {/* Add new category */}
+        <section className="mb-8 rounded-lg bg-white p-4 shadow-sm">
           <h2 className="mb-3 text-lg font-semibold">Add new category</h2>
           <form
             onSubmit={handleCreateCategory}
-            className="flex flex-col gap-2 sm:flex-row sm:items-center"
+            className="flex flex-col gap-2 sm:flex-row"
           >
             <input
               className="flex-1 rounded border border-slate-300 px-3 py-2 text-sm"
               placeholder="Category name"
               value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
+              onChange={(e) => {
+                setNewCategoryName(e.target.value);
+                if (error) setError(null);
+                if (success) setSuccess(null);
+              }}
             />
             <button
               type="submit"
-              className="flex h-10 items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              disabled={cannotCreateCategory}
+              className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Add category
             </button>
           </form>
+          {cannotCreateCategory && newCategoryName.length > 0 && (
+            <p className="mt-1 text-xs text-slate-400">
+              Category name cannot be only spaces.
+            </p>
+          )}
         </section>
 
-        {/* Categories list with counts, edit, delete */}
+        {/* Categories list */}
         <section className="rounded-lg bg-white p-4 shadow-sm">
-          <h2 className="mb-3 text-lg font-semibold">Categories overview</h2>
-
-          {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Existing categories</h2>
+            {!loading && (
+              <p className="text-xs text-slate-500">
+                You have{" "}
+                <span className="font-semibold">{categories.length}</span>{" "}
+                categor{categories.length === 1 ? "y" : "ies"}.
+              </p>
+            )}
+          </div>
 
           {loading ? (
             <p className="text-sm text-slate-500">Loading…</p>
           ) : categories.length === 0 ? (
             <p className="text-sm text-slate-500">
-              No categories yet. Create one above.
+              You don&apos;t have any categories yet. Add one above.
             </p>
           ) : (
             <ul className="space-y-2">
               {categories.map((cat) => {
-                const count = getNoteCountForCategory(cat.id);
-                const isEditing = editingCategoryId === cat.id;
+                const isEditing = editingId === cat.id;
 
                 return (
                   <li
                     key={cat.id}
-                    className="flex items-center gap-3 rounded border border-slate-200 px-3 py-2"
+                    className="flex flex-col items-start justify-between gap-2 rounded border border-slate-200 p-3 sm:flex-row sm:items-center"
                   >
-                    {/* Name or editor */}
                     <div className="flex-1">
                       {isEditing ? (
                         <input
                           className="w-full rounded border border-slate-300 px-2 py-1 text-sm"
-                          value={editingCategoryName}
-                          onChange={(e) =>
-                            setEditingCategoryName(e.target.value)
-                          }
+                          value={editingName}
+                          onChange={(e) => {
+                            setEditingName(e.target.value);
+                            if (error) setError(null);
+                            if (success) setSuccess(null);
+                          }}
                         />
                       ) : (
-                        <p className="text-sm font-semibold">{cat.name}</p>
+                        <p className="text-sm font-medium text-slate-800">
+                          {cat.name}
+                        </p>
                       )}
                     </div>
 
-                    {/* Count moved slightly left */}
-                    <p className="w-24 text-right text-xs text-slate-600">
-                      {count} note{count === 1 ? "" : "s"}
-                    </p>
-
-                    {/* Actions to the right of the count */}
                     <div className="flex gap-2">
                       {isEditing ? (
                         <>
                           <button
                             type="button"
-                            onClick={() => saveEditingCategory(cat.id)}
-                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                            onClick={() => saveEditing(cat.id)}
+                            disabled={cannotSaveEdit}
+                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Save
                           </button>
                           <button
                             type="button"
-                            onClick={cancelEditingCategory}
+                            onClick={cancelEditing}
                             className="rounded bg-slate-400 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-500"
                           >
                             Cancel
@@ -229,7 +248,7 @@ export default function CategoriesPage() {
                         <>
                           <button
                             type="button"
-                            onClick={() => startEditingCategory(cat)}
+                            onClick={() => startEditing(cat)}
                             className="rounded bg-slate-600 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-700"
                           >
                             Edit

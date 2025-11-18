@@ -106,6 +106,9 @@ export async function setNoteCategories(noteId: number, categoryIds: number[]) {
   return res.json();
 }
 
+const DUPLICATE_CATEGORY_MSG =
+  "This category name is already in use. Categories must be unique.";
+
 export async function createCategory(name: string) {
   const res = await fetch(`${API_URL}/categories`, {
     method: "POST",
@@ -114,16 +117,27 @@ export async function createCategory(name: string) {
   });
 
   if (!res.ok) {
-    throw new Error("Failed to create category");
+    let message = "Failed to create category";
+    try {
+      const data = await res.json();
+      if (data?.message) {
+        message = Array.isArray(data.message)
+          ? data.message.join(" ")
+          : data.message;
+      }
+    } catch {}
+
+    if (message === "Internal server error") {
+      message = DUPLICATE_CATEGORY_MSG;
+    }
+
+    throw new Error(message);
   }
 
   return res.json();
 }
 
-export async function updateCategory(
-  id: number,
-  name: string
-): Promise<Category> {
+export async function updateCategory(id: number, name: string) {
   const res = await fetch(`${API_URL}/categories/${id}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -131,7 +145,21 @@ export async function updateCategory(
   });
 
   if (!res.ok) {
-    throw new Error("Failed to update category");
+    let message = "Failed to update category";
+    try {
+      const data = await res.json();
+      if (data?.message) {
+        message = Array.isArray(data.message)
+          ? data.message.join(" ")
+          : data.message;
+      }
+    } catch {}
+
+    if (message === "Internal server error") {
+      message = DUPLICATE_CATEGORY_MSG;
+    }
+
+    throw new Error(message);
   }
 
   return res.json();
