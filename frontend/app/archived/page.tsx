@@ -90,6 +90,27 @@ export default function ArchivedNotesPage() {
 
           <div className="flex flex-col gap-2 md:items-end">
             <div className="flex items-center gap-3">
+              <Link
+                href="/"
+                className="flex h-10 items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                View active
+              </Link>
+              <Link
+                href="/categories"
+                className="flex h-10 items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                Manage categories
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        <section className="rounded-lg bg-white p-4 shadow-sm">
+          <div className="flex items-center justify-between gap-3 pb-3">
+            <h2 className="mb-3 text-lg font-semibold">Archived notes</h2>
+            <div className="flex flex-row justify-between gap-3">
+              <p>Filter by category</p>
               <select
                 className="rounded border border-slate-300 px-2 py-1 text-sm"
                 value={
@@ -111,25 +132,8 @@ export default function ArchivedNotesPage() {
                   </option>
                 ))}
               </select>
-
-              <Link
-                href="/"
-                className="text-sm font-medium text-blue-600 hover:underline"
-              >
-                Back to active
-              </Link>
-
-              <Link
-                href="/categories"
-                className="text-sm font-medium text-blue-600 hover:underline"
-              >
-                Manage categories
-              </Link>
             </div>
           </div>
-        </header>
-
-        <section className="rounded-lg bg-white p-4 shadow-sm">
           {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
           {loading ? (
             <p className="text-sm text-slate-500">Loading…</p>

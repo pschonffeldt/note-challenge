@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Note,
   Category,
@@ -183,39 +184,18 @@ export default function HomePage() {
 
           {/* Right side: filter + add category */}
           <div className="flex items-center gap-3">
-            <select
-              className="rounded border border-slate-300 px-2 py-1 text-sm"
-              value={
-                selectedCategoryFilter === "all"
-                  ? "all"
-                  : String(selectedCategoryFilter)
-              }
-              onChange={(e) => {
-                const value = e.target.value;
-                setSelectedCategoryFilter(
-                  value === "all" ? "all" : Number(value)
-                );
-              }}
-            >
-              <option value="all">All categories</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-            <a
+            <Link
               href="/archived"
-              className="text-sm font-medium text-blue-600 hover:underline"
+              className="flex h-10 items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
             >
               View archived
-            </a>
-            <a
+            </Link>
+            <Link
               href="/categories"
-              className="text-sm font-medium text-blue-600 hover:underline"
+              className="flex h-10 items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
             >
               Manage categories
-            </a>
+            </Link>
           </div>
         </header>
 
@@ -246,8 +226,34 @@ export default function HomePage() {
         </section>
 
         {/* Active notes list */}
-        <section className="rounded-lg bg-white p-4 shadow-sm">
-          <h2 className="mb-3 text-lg font-semibold">Active notes</h2>
+        <section className="rounded-lg bg-white p-4 shadow-sm ">
+          <div className="flex items-center justify-between gap-3 pb-3">
+            <h2 className="mb-3 text-lg font-semibold">Active notes</h2>
+            <div className="flex flex-row justify-between gap-3">
+              <p>Filter by category</p>
+              <select
+                className="rounded border border-slate-300 px-2 py-1 text-sm"
+                value={
+                  selectedCategoryFilter === "all"
+                    ? "all"
+                    : String(selectedCategoryFilter)
+                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedCategoryFilter(
+                    value === "all" ? "all" : Number(value)
+                  );
+                }}
+              >
+                <option value="all">All categories</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
           {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
 

@@ -123,21 +123,18 @@ export default function CategoriesPage() {
         <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-bold">Categories</h1>
-            <p className="text-sm text-slate-500">
-              Manage your categories and see how many notes are tagged with
-              each.
-            </p>
+            <p className="text-sm text-slate-500">Manage your categories.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="text-sm font-medium text-blue-600 hover:underline"
+              className="flex h-10 items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
             >
               Back to active notes
             </Link>
             <Link
               href="/archived"
-              className="text-sm font-medium text-blue-600 hover:underline"
+              className="flex h-10 items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
             >
               View archived notes
             </Link>
@@ -159,7 +156,7 @@ export default function CategoriesPage() {
             />
             <button
               type="submit"
-              className="rounded bg-slate-800 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900"
+              className="flex h-10 items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
             >
               Add category
             </button>
