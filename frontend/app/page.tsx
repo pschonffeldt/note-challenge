@@ -11,7 +11,6 @@ import {
   archiveNote,
   updateNote,
   setNoteCategories,
-  createCategory,
 } from "./lib/api";
 
 import { useEffect, useState, useCallback } from "react";
@@ -40,8 +39,6 @@ export default function HomePage() {
   const [categoryEditSelection, setCategoryEditSelection] = useState<number[]>(
     []
   );
-  // create categories
-  const [newCategoryName, setNewCategoryName] = useState("");
 
   const loadCategories = useCallback(async () => {
     try {
