@@ -10,6 +10,7 @@ import {
 } from "../lib/api";
 
 import { useEffect, useState, useCallback } from "react";
+import { Alert } from "../components/alert";
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -135,16 +136,8 @@ export default function CategoriesPage() {
         </header>
 
         {/* Global error / success alerts */}
-        {error && (
-          <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-            {error}
-          </div>
-        )}
-        {success && !error && (
-          <div className="mb-4 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
-            {success}
-          </div>
-        )}
+        <Alert variant="error" message={error} />
+        {!error && <Alert variant="success" message={success} />}
 
         {/* Add new category */}
         <section className="mb-8 rounded-lg bg-white p-4 shadow-sm">

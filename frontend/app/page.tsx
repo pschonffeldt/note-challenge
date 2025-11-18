@@ -14,6 +14,7 @@ import {
 } from "./lib/api";
 
 import { useEffect, useState, useCallback } from "react";
+import { Alert } from "./components/alert";
 
 export default function HomePage() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -310,7 +311,7 @@ export default function HomePage() {
                 Save note
               </button>
               {/* Global error / success alerts */}
-              {error && (
+              {/* {error && (
                 <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
                   {error}
                 </div>
@@ -319,7 +320,9 @@ export default function HomePage() {
                 <div className="mb-4 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
                   {success}
                 </div>
-              )}
+              )} */}
+              <Alert variant="error" message={error} />
+              {!error && <Alert variant="success" message={success} />}
             </div>
           </form>
         </section>

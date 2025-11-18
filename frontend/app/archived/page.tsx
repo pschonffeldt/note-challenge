@@ -12,6 +12,7 @@ import {
   unarchiveNote,
 } from "../lib/api";
 import { useEffect, useState, useCallback } from "react";
+import { Alert } from "../components/alert";
 
 export default function ArchivedPage() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -22,6 +23,7 @@ export default function ArchivedPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   // editing text
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -40,9 +42,9 @@ export default function ArchivedPage() {
     try {
       const data = await fetchCategories();
       setCategories(data);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Failed to load categories");
+      setSuccess(null);
     }
   }, []);
 
@@ -51,12 +53,12 @@ export default function ArchivedPage() {
       setLoading(true);
       const categoryId =
         selectedCategoryFilter === "all" ? undefined : selectedCategoryFilter;
-      const data = await fetchNotes(true, categoryId);
+      const data = await fetchNotes(true, categoryId); // archived notes
       setNotes(data);
       setError(null);
-    } catch (err) {
-      console.error(err);
+    } catch {
       setError("Failed to load notes");
+      setSuccess(null);
     } finally {
       setLoading(false);
     }
@@ -74,6 +76,8 @@ export default function ArchivedPage() {
     setEditingId(note.id);
     setEditingTitle(note.title);
     setEditingContent(note.content);
+    setError(null);
+    setSuccess(null);
   }
 
   function cancelEditing() {
@@ -83,17 +87,23 @@ export default function ArchivedPage() {
   }
 
   async function saveEditing(id: number) {
-    if (!editingTitle.trim() || !editingContent.trim()) return;
+    if (!editingTitle.trim() || !editingContent.trim()) {
+      setError("Title and content cannot be empty.");
+      setSuccess(null);
+      return;
+    }
 
     try {
       await updateNote(id, {
-        title: editingTitle,
-        content: editingContent,
+        title: editingTitle.trim(),
+        content: editingContent.trim(),
       });
       cancelEditing();
+      setError(null);
+      setSuccess("Note updated successfully.");
       await loadNotes();
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setSuccess(null);
       setError("Failed to update note");
     }
   }
@@ -101,9 +111,11 @@ export default function ArchivedPage() {
   async function handleDelete(id: number) {
     try {
       await deleteNote(id);
+      setError(null);
+      setSuccess("Note deleted.");
       await loadNotes();
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setSuccess(null);
       setError("Failed to delete note");
     }
   }
@@ -111,9 +123,11 @@ export default function ArchivedPage() {
   async function handleUnarchive(id: number) {
     try {
       await unarchiveNote(id);
+      setError(null);
+      setSuccess("Note moved back to active.");
       await loadNotes();
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setSuccess(null);
       setError("Failed to unarchive note");
     }
   }
@@ -121,6 +135,8 @@ export default function ArchivedPage() {
   function startCategoryEdit(note: Note) {
     setCategoryEditNoteId(note.id);
     setCategoryEditSelection(note.categories.map((c) => c.id));
+    setError(null);
+    setSuccess(null);
   }
 
   function cancelCategoryEdit() {
@@ -140,9 +156,11 @@ export default function ArchivedPage() {
     try {
       await setNoteCategories(noteId, categoryEditSelection);
       cancelCategoryEdit();
+      setError(null);
+      setSuccess("Categories updated successfully.");
       await loadNotes();
-    } catch (err) {
-      console.error(err);
+    } catch {
+      setSuccess(null);
       setError("Failed to update categories");
     }
   }
@@ -175,6 +193,10 @@ export default function ArchivedPage() {
             </Link>
           </div>
         </header>
+
+        {/* Global error / success alerts */}
+        <Alert variant="error" message={error} />
+        {!error && <Alert variant="success" message={success} />}
 
         <section className="rounded-lg bg-white p-4 shadow-sm ">
           <div className="flex items-center justify-between gap-3 pb-1">
@@ -212,8 +234,6 @@ export default function ArchivedPage() {
               archived note{notes.length === 1 ? "" : "s"} for this filter.
             </p>
           )}
-
-          {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
 
           {loading ? (
             <p className="text-sm text-slate-500">Loading…</p>
