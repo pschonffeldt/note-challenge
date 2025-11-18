@@ -11,6 +11,7 @@ import {
 
 import { useEffect, useState, useCallback } from "react";
 import { Alert } from "../components/alert";
+import { Button, buttonClasses } from "../components/button";
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -129,7 +130,7 @@ export default function CategoriesPage() {
           </div>
           <Link
             href="/"
-            className="flex h-10 items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            className={buttonClasses({ variant: "primary", size: "md" })}
           >
             Back to notes
           </Link>
@@ -156,13 +157,9 @@ export default function CategoriesPage() {
                 if (success) setSuccess(null);
               }}
             />
-            <button
-              type="submit"
-              disabled={cannotCreateCategory}
-              className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
+            <Button type="submit" disabled={cannotCreateCategory}>
               Add category
-            </button>
+            </Button>
           </form>
           {cannotCreateCategory && newCategoryName.length > 0 && (
             <p className="mt-1 text-xs text-slate-400">
@@ -221,38 +218,42 @@ export default function CategoriesPage() {
                     <div className="flex gap-2">
                       {isEditing ? (
                         <>
-                          <button
+                          <Button
                             type="button"
                             onClick={() => saveEditing(cat.id)}
                             disabled={cannotSaveEdit}
-                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            variant="success"
+                            size="sm"
                           >
                             Save
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
                             onClick={cancelEditing}
-                            className="rounded bg-slate-400 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-500"
+                            variant="muted"
+                            size="sm"
                           >
                             Cancel
-                          </button>
+                          </Button>
                         </>
                       ) : (
                         <>
-                          <button
+                          <Button
                             type="button"
                             onClick={() => startEditing(cat)}
-                            className="rounded bg-slate-600 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-700"
+                            variant="secondary"
+                            size="sm"
                           >
                             Edit
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
                             onClick={() => handleDeleteCategory(cat.id)}
-                            className="rounded bg-red-500 px-3 py-1 text-xs font-semibold text-white hover:bg-red-600"
+                            variant="danger"
+                            size="sm"
                           >
                             Delete
-                          </button>
+                          </Button>
                         </>
                       )}
                     </div>

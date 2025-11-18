@@ -13,6 +13,7 @@ import {
 } from "../lib/api";
 import { useEffect, useState, useCallback } from "react";
 import { Alert } from "../components/alert";
+import { Button, buttonClasses } from "../components/button";
 
 export default function ArchivedPage() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -181,13 +182,13 @@ export default function ArchivedPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/"
-              className="flex h-10 items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              className={buttonClasses({ variant: "primary", size: "md" })}
             >
               View active
             </Link>
             <Link
               href="/categories"
-              className="flex h-10 items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              className={buttonClasses({ variant: "primary", size: "md" })}
             >
               Manage categories
             </Link>
@@ -322,20 +323,22 @@ export default function ArchivedPage() {
                             ))}
                           </div>
                           <div className="mt-2 flex gap-2">
-                            <button
+                            <Button
                               type="button"
                               onClick={() => saveCategoryEdit(note.id)}
-                              className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                              variant="success"
+                              size="sm"
                             >
                               Save
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                               type="button"
                               onClick={cancelCategoryEdit}
-                              className="rounded bg-slate-400 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-500"
+                              variant="muted"
+                              size="sm"
                             >
                               Cancel
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       )}
@@ -344,52 +347,58 @@ export default function ArchivedPage() {
                     <div className="flex gap-2 md:flex-col">
                       {isEditing ? (
                         <>
-                          <button
+                          <Button
                             type="button"
                             onClick={() => saveEditing(note.id)}
                             disabled={cannotSaveEdit}
-                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            variant="success"
+                            size="sm"
                           >
                             Save
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
                             onClick={cancelEditing}
-                            className="rounded bg-slate-400 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-500"
+                            variant="muted"
+                            size="sm"
                           >
                             Cancel
-                          </button>
+                          </Button>
                         </>
                       ) : (
                         <>
-                          <button
+                          <Button
                             type="button"
                             onClick={() => startEditing(note)}
-                            className="rounded bg-slate-600 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-700"
+                            variant="secondary"
+                            size="sm"
                           >
                             Edit
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
                             onClick={() => startCategoryEdit(note)}
-                            className="rounded bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-700"
+                            variant="info"
+                            size="sm"
                           >
                             Categories
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
                             onClick={() => handleUnarchive(note.id)}
-                            className="rounded bg-amber-500 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-600"
+                            variant="warning"
+                            size="sm"
                           >
                             Unarchive
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
                             onClick={() => handleDelete(note.id)}
-                            className="rounded bg-red-500 px-3 py-1 text-xs font-semibold text-white hover:bg-red-600"
+                            variant="danger"
+                            size="sm"
                           >
                             Delete
-                          </button>
+                          </Button>
                         </>
                       )}
                     </div>

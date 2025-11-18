@@ -15,6 +15,7 @@ import {
 
 import { useEffect, useState, useCallback } from "react";
 import { Alert } from "./components/alert";
+import { Button, buttonClasses } from "./components/button";
 
 export default function HomePage() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -239,18 +240,22 @@ export default function HomePage() {
           <div className="flex items-center gap-3">
             <Link
               href="/archived"
-              className="flex h-10 items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              className={buttonClasses({ variant: "primary", size: "md" })}
             >
               View archived
             </Link>
             <Link
               href="/categories"
-              className="flex h-10 items-center rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              className={buttonClasses({ variant: "primary", size: "md" })}
             >
               Manage categories
             </Link>
           </div>
         </header>
+
+        {/* Global error / success alerts */}
+        <Alert variant="error" message={error} />
+        {!error && <Alert variant="success" message={success} />}
 
         {/* New note form */}
         <section className="mb-8 rounded-lg bg-white p-4 shadow-sm">
@@ -303,27 +308,7 @@ export default function HomePage() {
               </div>
             )}
 
-            <div className="flex flex-row gap-6 align-baseline">
-              <button
-                type="submit"
-                className="rounded h-10  bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-              >
-                Save note
-              </button>
-              {/* Global error / success alerts */}
-              {/* {error && (
-                <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-                  {error}
-                </div>
-              )}
-              {success && !error && (
-                <div className="mb-4 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
-                  {success}
-                </div>
-              )} */}
-              <Alert variant="error" message={error} />
-              {!error && <Alert variant="success" message={success} />}
-            </div>
+            <Button type="submit">Save note</Button>
           </form>
         </section>
 
@@ -460,20 +445,22 @@ export default function HomePage() {
                             ))}
                           </div>
                           <div className="mt-2 flex gap-2">
-                            <button
+                            <Button
                               type="button"
                               onClick={() => saveCategoryEdit(note.id)}
-                              className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                              variant="success"
+                              size="sm"
                             >
                               Save
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                               type="button"
                               onClick={cancelCategoryEdit}
-                              className="rounded bg-slate-400 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-500"
+                              variant="muted"
+                              size="sm"
                             >
                               Cancel
-                            </button>
+                            </Button>
                           </div>
                         </div>
                       )}
@@ -482,51 +469,57 @@ export default function HomePage() {
                     <div className="flex gap-2 md:flex-col">
                       {isEditing ? (
                         <>
-                          <button
+                          <Button
                             type="button"
                             onClick={() => saveEditing(note.id)}
-                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                            variant="success"
+                            size="sm"
                           >
                             Save
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
                             onClick={cancelEditing}
-                            className="rounded bg-slate-400 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-500"
+                            variant="muted"
+                            size="sm"
                           >
                             Cancel
-                          </button>
+                          </Button>
                         </>
                       ) : (
                         <>
-                          <button
+                          <Button
                             type="button"
                             onClick={() => startEditing(note)}
-                            className="rounded bg-slate-600 px-3 py-1 text-xs font-semibold text-white hover:bg-slate-700"
+                            variant="secondary"
+                            size="sm"
                           >
                             Edit
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
                             onClick={() => startCategoryEdit(note)}
-                            className="rounded bg-indigo-600 px-3 py-1 text-xs font-semibold text-white hover:bg-indigo-700"
+                            variant="info"
+                            size="sm"
                           >
                             Categories
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
                             onClick={() => handleArchive(note.id)}
-                            className="rounded bg-amber-500 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-600"
+                            variant="warning"
+                            size="sm"
                           >
                             Archive
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
                             onClick={() => handleDelete(note.id)}
-                            className="rounded bg-red-500 px-3 py-1 text-xs font-semibold text-white hover:bg-red-600"
+                            variant="danger"
+                            size="sm"
                           >
                             Delete
-                          </button>
+                          </Button>
                         </>
                       )}
                     </div>
