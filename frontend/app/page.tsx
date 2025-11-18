@@ -26,6 +26,7 @@ export default function HomePage() {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   // categories for *new* note
   const [newNoteCategorySelection, setNewNoteCategorySelection] = useState<
@@ -45,18 +46,17 @@ export default function HomePage() {
     []
   );
 
-  // validation helpers
-  const cannotCreateNote = !title.trim() || !content.trim();
-  const cannotSaveEdit =
-    !editingTitle.trim() || !editingContent.trim() || editingId === null;
-
   const loadCategories = useCallback(async () => {
     try {
+      setLoading(true);
       const data = await fetchCategories();
       setCategories(data);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load categories");
+      setError(null);
+    } catch {
+      setError("Failed to load categories.");
+      setSuccess(null);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -68,9 +68,9 @@ export default function HomePage() {
       const data = await fetchNotes(false, categoryId); // active notes only
       setNotes(data);
       setError(null);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load notes");
+    } catch {
+      setError("Failed to load notes.");
+      setSuccess(null);
     } finally {
       setLoading(false);
     }
@@ -96,11 +96,21 @@ export default function HomePage() {
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim() || !content.trim()) return;
+    const trimmedTitle = title.trim();
+    const trimmedContent = content.trim();
+
+    if (!trimmedTitle || !trimmedContent) {
+      setError("Please enter both a title and content before saving.");
+      setSuccess(null);
+      return;
+    }
 
     try {
       // 1) create note
-      const created = await createNote({ title, content });
+      const created = await createNote({
+        title: trimmedTitle,
+        content: trimmedContent,
+      });
 
       // 2) assign categories if any selected
       if (created?.id && newNoteCategorySelection.length > 0) {
@@ -111,30 +121,36 @@ export default function HomePage() {
       setTitle("");
       setContent("");
       setNewNoteCategorySelection([]);
+      setError(null);
+      setSuccess("Note created successfully.");
       await loadNotes();
-    } catch (err) {
-      console.error(err);
-      setError("Failed to create note");
+    } catch {
+      setSuccess(null);
+      setError("Failed to create note.");
     }
   }
 
   async function handleDelete(id: number) {
     try {
       await deleteNote(id);
+      setError(null);
+      setSuccess("Note deleted.");
       await loadNotes();
-    } catch (err) {
-      console.error(err);
-      setError("Failed to delete note");
+    } catch {
+      setSuccess(null);
+      setError("Failed to delete note.");
     }
   }
 
   async function handleArchive(id: number) {
     try {
       await archiveNote(id);
+      setError(null);
+      setSuccess("Note archived.");
       await loadNotes();
-    } catch (err) {
-      console.error(err);
-      setError("Failed to archive note");
+    } catch {
+      setSuccess(null);
+      setError("Failed to archive note.");
     }
   }
 
@@ -142,6 +158,8 @@ export default function HomePage() {
     setEditingId(note.id);
     setEditingTitle(note.title);
     setEditingContent(note.content);
+    setSuccess(null);
+    setError(null);
   }
 
   function cancelEditing() {
@@ -151,24 +169,32 @@ export default function HomePage() {
   }
 
   async function saveEditing(id: number) {
-    if (!editingTitle.trim() || !editingContent.trim()) return;
+    if (!editingTitle.trim() || !editingContent.trim()) {
+      setError("Title and content cannot be empty.");
+      setSuccess(null);
+      return;
+    }
 
     try {
       await updateNote(id, {
-        title: editingTitle,
-        content: editingContent,
+        title: editingTitle.trim(),
+        content: editingContent.trim(),
       });
       cancelEditing();
+      setError(null);
+      setSuccess("Note updated successfully.");
       await loadNotes();
-    } catch (err) {
-      console.error(err);
-      setError("Failed to update note");
+    } catch {
+      setSuccess(null);
+      setError("Failed to update note.");
     }
   }
 
   function startCategoryEdit(note: Note) {
     setCategoryEditNoteId(note.id);
     setCategoryEditSelection(note.categories.map((c) => c.id));
+    setSuccess(null);
+    setError(null);
   }
 
   function cancelCategoryEdit() {
@@ -188,10 +214,12 @@ export default function HomePage() {
     try {
       await setNoteCategories(noteId, categoryEditSelection);
       cancelCategoryEdit();
+      setError(null);
+      setSuccess("Categories updated successfully.");
       await loadNotes();
-    } catch (err) {
-      console.error(err);
-      setError("Failed to update categories");
+    } catch {
+      setSuccess(null);
+      setError("Failed to update categories.");
     }
   }
 
@@ -223,6 +251,18 @@ export default function HomePage() {
           </div>
         </header>
 
+        {/* Global error / success alerts */}
+        {error && (
+          <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            {error}
+          </div>
+        )}
+        {success && !error && (
+          <div className="mb-4 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+            {success}
+          </div>
+        )}
+
         {/* New note form */}
         <section className="mb-8 rounded-lg bg-white p-4 shadow-sm">
           <h2 className="mb-3 text-lg font-semibold">New note</h2>
@@ -231,14 +271,22 @@ export default function HomePage() {
               className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
               placeholder="Title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (error) setError(null);
+                if (success) setSuccess(null);
+              }}
             />
             <textarea
               className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
               placeholder="Content"
               rows={4}
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => {
+                setContent(e.target.value);
+                if (error) setError(null);
+                if (success) setSuccess(null);
+              }}
             />
 
             {/* Category selection for new note */}
@@ -268,17 +316,10 @@ export default function HomePage() {
 
             <button
               type="submit"
-              disabled={cannotCreateNote}
-              className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
             >
               Save note
             </button>
-
-            {cannotCreateNote && (title.trim() || content.trim()) && (
-              <p className="text-xs text-slate-400">
-                Add a title and content to save your note.
-              </p>
-            )}
           </form>
         </section>
 
@@ -320,8 +361,6 @@ export default function HomePage() {
             </p>
           )}
 
-          {error && <p className="mb-2 text-sm text-red-600">{error}</p>}
-
           {loading ? (
             <p className="text-sm text-slate-500">Loading…</p>
           ) : notes.length === 0 ? (
@@ -345,13 +384,21 @@ export default function HomePage() {
                           <input
                             className="mb-2 w-full rounded border border-slate-300 px-2 py-1 text-sm"
                             value={editingTitle}
-                            onChange={(e) => setEditingTitle(e.target.value)}
+                            onChange={(e) => {
+                              setEditingTitle(e.target.value);
+                              if (error) setError(null);
+                              if (success) setSuccess(null);
+                            }}
                           />
                           <textarea
                             className="w-full rounded border border-slate-300 px-2 py-1 text-sm"
                             rows={3}
                             value={editingContent}
-                            onChange={(e) => setEditingContent(e.target.value)}
+                            onChange={(e) => {
+                              setEditingContent(e.target.value);
+                              if (error) setError(null);
+                              if (success) setSuccess(null);
+                            }}
                           />
                         </>
                       ) : (
@@ -434,8 +481,7 @@ export default function HomePage() {
                           <button
                             type="button"
                             onClick={() => saveEditing(note.id)}
-                            disabled={cannotSaveEdit}
-                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
                           >
                             Save
                           </button>
