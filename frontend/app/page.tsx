@@ -45,6 +45,11 @@ export default function HomePage() {
     []
   );
 
+  // validation helpers
+  const cannotCreateNote = !title.trim() || !content.trim();
+  const cannotSaveEdit =
+    !editingTitle.trim() || !editingContent.trim() || editingId === null;
+
   const loadCategories = useCallback(async () => {
     try {
       const data = await fetchCategories();
@@ -263,10 +268,17 @@ export default function HomePage() {
 
             <button
               type="submit"
-              className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              disabled={cannotCreateNote}
+              className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Save note
             </button>
+
+            {cannotCreateNote && (title.trim() || content.trim()) && (
+              <p className="text-xs text-slate-400">
+                Add a title and content to save your note.
+              </p>
+            )}
           </form>
         </section>
 
@@ -414,7 +426,8 @@ export default function HomePage() {
                           <button
                             type="button"
                             onClick={() => saveEditing(note.id)}
-                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700"
+                            disabled={cannotSaveEdit}
+                            className="rounded bg-emerald-600 px-3 py-1 text-xs font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Save
                           </button>
