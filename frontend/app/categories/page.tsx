@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   Category,
   fetchCategories,
@@ -11,7 +10,7 @@ import {
 
 import { useEffect, useState, useCallback } from "react";
 import { Alert } from "../components/alert";
-import { Button, buttonClasses } from "../components/button";
+import { Button, ButtonLink } from "../components/button";
 
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -128,12 +127,9 @@ export default function CategoriesPage() {
               Create, rename and delete categories used by your notes.
             </p>
           </div>
-          <Link
-            href="/"
-            className={buttonClasses({ variant: "primary", size: "md" })}
-          >
+          <ButtonLink href="/" size="md">
             Back to notes
-          </Link>
+          </ButtonLink>
         </header>
 
         {/* Global error / success alerts */}

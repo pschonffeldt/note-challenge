@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   Note,
   Category,
@@ -13,7 +12,7 @@ import {
 } from "../lib/api";
 import { useEffect, useState, useCallback } from "react";
 import { Alert } from "../components/alert";
-import { Button, buttonClasses } from "../components/button";
+import { Button, ButtonLink } from "../components/button";
 
 export default function ArchivedPage() {
   const [notes, setNotes] = useState<Note[]>([]);
@@ -180,18 +179,12 @@ export default function ArchivedPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className={buttonClasses({ variant: "primary", size: "md" })}
-            >
+            <ButtonLink href="/" size="md">
               View active
-            </Link>
-            <Link
-              href="/categories"
-              className={buttonClasses({ variant: "primary", size: "md" })}
-            >
+            </ButtonLink>
+            <ButtonLink href="/categories" size="md">
               Manage categories
-            </Link>
+            </ButtonLink>
           </div>
         </header>
 
