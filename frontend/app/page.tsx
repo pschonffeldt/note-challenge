@@ -48,6 +48,8 @@ export default function HomePage() {
     []
   );
 
+  const cannotSaveNewNote = !title.trim() || !content.trim();
+
   const loadCategories = useCallback(async () => {
     try {
       setLoading(true);
@@ -308,7 +310,9 @@ export default function HomePage() {
               </div>
             )}
 
-            <Button type="submit">Save note</Button>
+            <Button type="submit" disabled={cannotSaveNewNote}>
+              Save note
+            </Button>
           </form>
         </section>
 
