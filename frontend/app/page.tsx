@@ -251,18 +251,6 @@ export default function HomePage() {
           </div>
         </header>
 
-        {/* Global error / success alerts */}
-        {error && (
-          <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
-            {error}
-          </div>
-        )}
-        {success && !error && (
-          <div className="mb-4 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
-            {success}
-          </div>
-        )}
-
         {/* New note form */}
         <section className="mb-8 rounded-lg bg-white p-4 shadow-sm">
           <h2 className="mb-3 text-lg font-semibold">New note</h2>
@@ -314,12 +302,25 @@ export default function HomePage() {
               </div>
             )}
 
-            <button
-              type="submit"
-              className="rounded bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
-            >
-              Save note
-            </button>
+            <div className="flex flex-row gap-6 align-baseline">
+              <button
+                type="submit"
+                className="rounded h-10  bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              >
+                Save note
+              </button>
+              {/* Global error / success alerts */}
+              {error && (
+                <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                  {error}
+                </div>
+              )}
+              {success && !error && (
+                <div className="mb-4 rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                  {success}
+                </div>
+              )}
+            </div>
           </form>
         </section>
 
