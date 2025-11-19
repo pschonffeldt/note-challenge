@@ -1,60 +1,58 @@
-import {
-  Injectable,
-  ConflictException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { CreateCategoryDto } from './dto/create-category.dto';
 
 @Injectable()
 export class CategoriesService {
   constructor(private prisma: PrismaService) {}
 
-  async create(dto: CreateCategoryDto) {
-    const name = dto.name?.trim();
-
-    if (!name) {
-      throw new BadRequestException('Category name cannot be empty.');
-    }
-
-    const existing = await this.prisma.category.findUnique({
-      where: { name },
-    });
-
-    if (existing) {
-      throw new ConflictException(
-        'This category name is already in use. Categories must be unique.',
-      );
-    }
-
-    return this.prisma.category.create({
-      data: { name },
+  async findAll() {
+    return this.prisma.category.findMany({
+      orderBy: { id: 'asc' },
     });
   }
 
+  async create(dto: CreateCategoryDto) {
+    try {
+      return await this.prisma.category.create({
+        data: { name: dto.name },
+      });
+    } catch (err: unknown) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'This category name is already in use. Categories must be unique.',
+        );
+      }
+      throw err;
+    }
+  }
+
   async update(id: number, dto: CreateCategoryDto) {
-    const name = dto.name?.trim();
-
-    if (!name) {
-      throw new BadRequestException('Category name cannot be empty.');
+    try {
+      return await this.prisma.category.update({
+        where: { id },
+        data: { name: dto.name },
+      });
+    } catch (err: unknown) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'This category name is already in use. Categories must be unique.',
+        );
+      }
+      throw err;
     }
+  }
 
-    const existing = await this.prisma.category.findFirst({
-      where: {
-        name,
-        NOT: { id },
-      },
-    });
-
-    if (existing) {
-      throw new ConflictException(
-        'This category name is already in use. Categories must be unique.',
-      );
-    }
-
-    return this.prisma.category.update({
+  async remove(id: number) {
+    return this.prisma.category.delete({
       where: { id },
-      data: { name },
     });
   }
 }
